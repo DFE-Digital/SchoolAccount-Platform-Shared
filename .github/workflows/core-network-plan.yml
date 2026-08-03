@@ -1,0 +1,39 @@
+name: Network - Terraform Plan
+
+on:
+  pull_request:
+    paths:
+      - 'network/**'
+      - 'modules/subnet/**'
+      - 'modules/nsg/**'
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    environment: dev
+
+    env:
+      ARM_CLIENT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
+      ARM_CLIENT_SECRET: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
+      ARM_SUBSCRIPTION_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
+      ARM_TENANT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: core-network/dev
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: core-network/dev
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: core-network/dev
+        run: terraform plan
