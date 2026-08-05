@@ -9,15 +9,18 @@ $location = "uksouth"
 switch ($Environment) {
     "Dev" {
         $resourceGroupName = "s268d01rg-uks-sa-tfstate"
-        $storageAccountName = "s268d01stsatfstate"
+        $storageAccountName = "s268d01sttfstate"
+        $environmentTag = "Dev"
     }
     "PreProd" {
         $resourceGroupName = "s268t05rg-uks-sa-tfstate"
-        $storageAccountName = "s268t05stsatfstate"
+        $storageAccountName = "s268t05sttfstate"
+        $environmentTag = "PreProd"
     }
     "Prod" {
         $resourceGroupName = "s268p01rg-uks-sa-tfstate"
-        $storageAccountName = "s268p01stsatfstate"
+        $storageAccountName = "s268p01sttfstate"
+        $environmentTag = "Prod"
     }
 }
 
@@ -29,7 +32,7 @@ Write-Host "==================================================="
 Write-Host " School Account Terraform Backend Bootstrap"
 Write-Host "==================================================="
 Write-Host ""
-Write-Host "Environment : $Environment"
+Write-Host "Environment : $environmentTag"
 Write-Host "Subscription : $subscriptionName"
 Write-Host "Subscription ID : $subscriptionId"
 Write-Host "Resource Group : $resourceGroupName"
@@ -49,7 +52,15 @@ az account show --query name -o tsv
 Write-Host "`nCreating Resource Group..."
 az group create `
     --name $resourceGroupName `
-    --location $location
+    --location $location `
+    --tags `
+        Environment=$environmentTag `
+        "Parent Business=Funding and Allocations" `
+        "Portfolio=Education and Skills Funding Agency" `
+        "Product=School Account" `
+        "Service=Funding and Allocations" `
+        "Service Line=Funding" `
+        "Service Offering=School Account"
 
 Write-Host "`nCreating Storage Account..."
 az storage account create `
@@ -97,13 +108,6 @@ az storage container create `
     --name app-state `
     --account-name $storageAccountName `
     --auth-mode login
-
-Write-Host "`nApplying CanNotDelete Lock..."
-
-az lock create `
-    --name "TerraformStateProtection" `
-    --lock-type CanNotDelete `
-    --resource-group $resourceGroupName
 
 Write-Host ""
 Write-Host "==================================================="

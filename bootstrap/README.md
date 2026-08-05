@@ -16,7 +16,6 @@ The script creates and configures:
 - Container Soft Delete (30 days)
 - HTTPS-only access
 - Minimum TLS version 1.2
-- CanNotDelete lock
  
 ---
  
@@ -117,14 +116,7 @@ Each Storage Account is configured with:
 - Blob Soft Delete (30 days)
 - Container Soft Delete (30 days)
  
-Each Terraform State Resource Group is protected using a:
- 
-```text
-CanNotDelete
-```
- 
-Azure Resource Lock.
- 
+
 ---
  
 ## Prerequisites
