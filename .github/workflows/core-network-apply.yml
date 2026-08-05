@@ -36,4 +36,4 @@ jobs:
 
       - name: Terraform Apply
         working-directory: core-network/dev
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -parallelism=1

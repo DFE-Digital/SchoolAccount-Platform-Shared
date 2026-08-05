@@ -39,4 +39,4 @@ jobs:
 
       - name: Terraform Plan
         working-directory: core-network/dev
-        run: terraform plan
+        run: terraform plan -parallelism=1
