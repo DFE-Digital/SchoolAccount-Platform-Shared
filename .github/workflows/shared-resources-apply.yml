@@ -1,0 +1,12 @@
+# TODO: Enable when Shared Resources Terraform implementation begins
+
+on:
+  workflow_dispatch:
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Not implemented
+        run: echo "Shared Resources deployment is not yet implemented."
