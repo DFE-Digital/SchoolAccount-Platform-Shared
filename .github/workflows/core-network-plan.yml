@@ -1,9 +1,12 @@
 name: Network - Terraform Plan
 
 on:
-  pull_request:
-    paths:
-      - 'network/**'
+  workflow_dispatch:
+    
+  push:
+    branches:
+      - main
+      - 'core-network/**'
       - 'modules/subnet/**'
       - 'modules/nsg/**'
 

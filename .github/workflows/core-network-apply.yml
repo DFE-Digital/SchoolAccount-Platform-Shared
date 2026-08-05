@@ -1,11 +1,13 @@
 name: Network - Terraform Apply
 
 on:
+  workflow_dispatch:
+
   push:
     branches:
       - main
     paths:
-      - 'network/**'
+      - 'core-network/**'
       - 'modules/subnet/**'
       - 'modules/nsg/**'
 
