@@ -45,18 +45,3 @@ module "subnets" {
     }
   }
 }
-
-resource "azurerm_subnet_network_security_group_association" "ace" {
-  subnet_id                 = module.subnets.subnet_ids["ace"]
-  network_security_group_id = module.nsgs.nsg_ids["ace"]
-}
-
-resource "azurerm_subnet_network_security_group_association" "appsvc" {
-  subnet_id                 = module.subnets.subnet_ids["appsvc"]
-  network_security_group_id = module.nsgs.nsg_ids["appsvc"]
-}
-
-resource "azurerm_subnet_network_security_group_association" "pe" {
-  subnet_id                 = module.subnets.subnet_ids["pe"]
-  network_security_group_id = module.nsgs.nsg_ids["pe"]
-}
