@@ -2,12 +2,21 @@ name: Network - Terraform Apply
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment
+        required: true
+        type: choice
+        options:
+          - dev
+          - preprod
+          - prod
 
 jobs:
   terraform-apply:
     name: Terraform Apply
     runs-on: ubuntu-latest
-    environment: dev
+    environment: ${{ inputs.environment }}
 
     env:
       ARM_CLIENT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
@@ -17,15 +26,15 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: core-network/dev
+        working-directory: core-network/${{ inputs.environment }}
         run: terraform init
 
       - name: Terraform Apply
-        working-directory: core-network/dev
+        working-directory: core-network/${{ inputs.environment }}
         run: terraform apply -auto-approve -parallelism=1
