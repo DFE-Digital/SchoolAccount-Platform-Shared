@@ -3,9 +3,10 @@ module "nsgs" {
   resource_group_name = var.resource_group_name
   location            = var.location
   nsgs = {
-    ace    = { name = "s268p01-uks-ace-nsg-01" }
     appsvc = { name = "s268p01-uks-appsvc-nsg-01" }
     pe     = { name = "s268p01-uks-pe-nsg-01" }
+    ace    = { name = "s268p01-uks-ace-nsg-01" }
+    mgmt   = { name = "s268p01-uks-mgmt-nsg-01" }
   }
 }
 
@@ -14,17 +15,6 @@ module "subnets" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = var.virtual_network_name
   subnets = {
-    ace = {
-      name                              = "s268p01-uks-ace-sn-01"
-      address_prefixes                  = ["10.216.168.64/26"]
-      private_endpoint_network_policies = "Enabled"
-      nsg_id                            = module.nsgs.nsg_ids["ace"]
-      delegation = {
-        name         = "ace-delegation"
-        service_name = "Microsoft.App/environments"
-        actions      = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
-      }
-    }
     appsvc = {
       name                              = "s268p01-uks-appsvc-sn-01"
       address_prefixes                  = ["10.216.168.0/27"]
@@ -41,6 +31,24 @@ module "subnets" {
       address_prefixes                  = ["10.216.168.32/27"]
       private_endpoint_network_policies = "Disabled"
       nsg_id                            = module.nsgs.nsg_ids["pe"]
+      delegation                        = null
+    }
+    ace = {
+      name                              = "s268p01-uks-ace-sn-01"
+      address_prefixes                  = ["10.216.168.64/26"]
+      private_endpoint_network_policies = "Enabled"
+      nsg_id                            = module.nsgs.nsg_ids["ace"]
+      delegation = {
+        name         = "ace-delegation"
+        service_name = "Microsoft.App/environments"
+        actions      = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+      }
+    }
+    mgmt = {
+      name                              = "s268p01-uks-mgmt-sn-01"
+      address_prefixes                  = ["10.216.168.224/28"]
+      private_endpoint_network_policies = "Enabled"
+      nsg_id                            = module.nsgs.nsg_ids["mgmt"]
       delegation                        = null
     }
   }
