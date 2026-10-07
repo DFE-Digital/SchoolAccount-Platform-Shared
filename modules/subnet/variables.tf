@@ -10,11 +10,11 @@ variable "virtual_network_name" {
 
 variable "subnets" {
   type = map(object({
-    name                               = string
-    address_prefixes                   = list(string)
-    private_endpoint_network_policies  = optional(string, "Enabled")
-    nsg_id                             = optional(string, null)
-    delegation                         = optional(object({
+    name                              = string
+    address_prefixes                  = list(string)
+    private_endpoint_network_policies = optional(string, "Enabled")
+    nsg_id                            = optional(string, null)
+    delegation = optional(object({
       name         = string
       service_name = string
       actions      = list(string)
