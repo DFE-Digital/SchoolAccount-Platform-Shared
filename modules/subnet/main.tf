@@ -7,7 +7,7 @@ resource "azapi_resource" "subnet" {
   name      = each.value.name
   parent_id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/virtualNetworks/${var.virtual_network_name}"
 
-  body = jsonencode({
+  body = {
     properties = {
       addressPrefix = each.value.address_prefixes[0]
       networkSecurityGroup = each.value.nsg_id != null ? {
@@ -23,5 +23,5 @@ resource "azapi_resource" "subnet" {
         }
       ] : []
     }
-  })
+  }
 }
