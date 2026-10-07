@@ -1,0 +1,5 @@
+resource_group_name  = "s268t05rg-uks-sa-tfstate"
+storage_account_name = "s268t05sttfstate"
+container_name       = "platform-shared"
+key                  = "shared-resources.tfstate"
+subscription_id      = "f493beb7-4438-4088-83cc-91ea64a5202e"

@@ -44,9 +44,9 @@ jobs:
       # requests that cannot read environment secrets.
       - name: Terraform Init and Validate
         run: |
-          for directory in core-network/* shared-resources/*; do
+          for directory in core-network shared-resources; do
             echo "::group::$directory"
-            terraform -chdir="$directory" init -input=false -backend=false
+            terraform -chdir="$directory" init -input=false -lockfile=readonly -backend=false
             terraform -chdir="$directory" validate
             echo "::endgroup::"
           done
@@ -71,38 +71,31 @@ jobs:
       environment: ${{ matrix.environment }}
     secrets: inherit
 
+  # Each environment applies the core network before the shared resources,
+  # which may depend on it.
   apply-dev:
     name: Apply To Dev
     needs: plan
-    strategy:
-      matrix:
-        component: [core-network, shared-resources]
     uses: ./.github/workflows/apply.yml
     with:
-      component: ${{ matrix.component }}
+      components: core-network shared-resources
       environment: dev
     secrets: inherit
 
   apply-preprod:
     name: Apply To Pre-Prod
     needs: [plan, apply-dev]
-    strategy:
-      matrix:
-        component: [core-network, shared-resources]
     uses: ./.github/workflows/apply.yml
     with:
-      component: ${{ matrix.component }}
+      components: core-network shared-resources
       environment: preprod
     secrets: inherit
 
   apply-prod:
     name: Apply To Prod
     needs: [plan, apply-preprod]
-    strategy:
-      matrix:
-        component: [core-network, shared-resources]
     uses: ./.github/workflows/apply.yml
     with:
-      component: ${{ matrix.component }}
+      components: core-network shared-resources
       environment: prod
     secrets: inherit
