@@ -1,0 +1,108 @@
+name: Platform Shared Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# A deploy holds its group from the first plan to the last apply, so a second
+# run cannot change an environment between a plan and its apply. Pull request
+# runs only validate, so they queue on their own branch and cancel when
+# superseded.
+concurrency:
+  group: ${{ github.event_name == 'push' && 'deploy-platform-shared' || format('validate-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Keep in step with plan.yml and apply.yml.
+  TF_VERSION: 1.16.3
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive -diff
+
+      # No backend: this needs no Azure credentials, so it also runs for pull
+      # requests that cannot read environment secrets.
+      - name: Terraform Init and Validate
+        run: |
+          for directory in core-network/* shared-resources/*; do
+            echo "::group::$directory"
+            terraform -chdir="$directory" init -input=false -backend=false
+            terraform -chdir="$directory" validate
+            echo "::endgroup::"
+          done
+
+  # Plans every component in every environment before any is applied, so the
+  # run summary shows all the plans up front. The environments are independent,
+  # each with its own subscription and state, so the plans run in parallel. Each
+  # waits on its environment's reviewers, and GitHub lets one review approve all
+  # of them at once. If any plan fails, nothing is applied.
+  plan:
+    name: Plan
+    needs: validate
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [core-network, shared-resources]
+        environment: [dev, preprod, prod]
+    uses: ./.github/workflows/plan.yml
+    with:
+      component: ${{ matrix.component }}
+      environment: ${{ matrix.environment }}
+    secrets: inherit
+
+  apply-dev:
+    name: Apply To Dev
+    needs: plan
+    strategy:
+      matrix:
+        component: [core-network, shared-resources]
+    uses: ./.github/workflows/apply.yml
+    with:
+      component: ${{ matrix.component }}
+      environment: dev
+    secrets: inherit
+
+  apply-preprod:
+    name: Apply To Pre-Prod
+    needs: [plan, apply-dev]
+    strategy:
+      matrix:
+        component: [core-network, shared-resources]
+    uses: ./.github/workflows/apply.yml
+    with:
+      component: ${{ matrix.component }}
+      environment: preprod
+    secrets: inherit
+
+  apply-prod:
+    name: Apply To Prod
+    needs: [plan, apply-preprod]
+    strategy:
+      matrix:
+        component: [core-network, shared-resources]
+    uses: ./.github/workflows/apply.yml
+    with:
+      component: ${{ matrix.component }}
+      environment: prod
+    secrets: inherit
