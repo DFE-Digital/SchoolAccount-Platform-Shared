@@ -1,5 +1,3 @@
-data "azurerm_subscription" "current" {}
-
 data "azurerm_log_analytics_workspace" "shared" {
   name                = var.log_analytics_workspace_name
   resource_group_name = var.resource_group_name
