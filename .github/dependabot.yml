@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: "terraform"
+    directories:
+      - "/core-network"
+      - "/shared-resources"
+      - "/modules/*"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 3
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    cooldown:
+      default-days: 3
