@@ -23,7 +23,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ inputs.component }}/${{ inputs.environment }}
+        working-directory: ${{ inputs.component }}
 
     env:
       ARM_CLIENT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
@@ -46,16 +46,15 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
-      # Each component and environment has its backend in its own backend.tf.
       - name: Terraform Init
-        run: terraform init -input=false -reconfigure
+        run: terraform init -input=false -reconfigure -backend-config=environments/${{ inputs.environment }}.backend.hcl
 
       - name: Terraform Validate
         run: terraform validate
 
       # One operation at a time, as the core network's previous workflows did.
       - name: Terraform Plan
-        run: terraform plan -input=false -parallelism=1 -out=tfplan
+        run: terraform plan -input=false -parallelism=1 -var-file=environments/${{ inputs.environment }}.tfvars -out=tfplan
 
       - name: Publish Plan To Run Summary
         run: |
@@ -70,5 +69,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: tfplan-${{ inputs.component }}-${{ inputs.environment }}
-          path: ${{ inputs.component }}/${{ inputs.environment }}/tfplan
+          path: ${{ inputs.component }}/tfplan
           retention-days: 1

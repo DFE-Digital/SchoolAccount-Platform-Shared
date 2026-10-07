@@ -23,7 +23,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ inputs.component }}/${{ inputs.environment }}
+        working-directory: ${{ inputs.component }}
 
     env:
       ARM_CLIENT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientId }}
@@ -47,13 +47,13 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        run: terraform init -input=false -reconfigure
+        run: terraform init -input=false -reconfigure -backend-config=environments/${{ inputs.environment }}.backend.hcl
 
       - name: Download Plan
         uses: actions/download-artifact@v8
         with:
           name: tfplan-${{ inputs.component }}-${{ inputs.environment }}
-          path: ${{ inputs.component }}/${{ inputs.environment }}
+          path: ${{ inputs.component }}
 
       # The saved plan is refused if the environment's state has changed since
       # it was made, so a stale plan fails here rather than applying.

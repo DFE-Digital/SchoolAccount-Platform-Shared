@@ -1,0 +1,5 @@
+resource_group_name  = "s268p01rg-uks-sa-tfstate"
+storage_account_name = "s268p01sttfstate"
+container_name       = "platform-shared"
+key                  = "core-network.tfstate"
+subscription_id      = "ca7772e2-a1fa-4933-8218-365762b3fe92"
