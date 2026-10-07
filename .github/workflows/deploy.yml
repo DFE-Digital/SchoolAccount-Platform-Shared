@@ -38,6 +38,6 @@ jobs:
     needs: plan
     uses: ./.github/workflows/apply.yml
     with:
-      component: ${{ inputs.component }}
+      components: ${{ inputs.component }}
       environment: ${{ inputs.environment }}
     secrets: inherit
