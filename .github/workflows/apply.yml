@@ -47,7 +47,7 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        run: terraform init -input=false -reconfigure -backend-config=environments/${{ inputs.environment }}.backend.hcl
+        run: terraform init -input=false -lockfile=readonly -reconfigure -backend-config=environments/${{ inputs.environment }}.backend.hcl
 
       - name: Download Plan
         uses: actions/download-artifact@v8

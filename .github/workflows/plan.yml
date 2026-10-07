@@ -46,8 +46,10 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
+      # Fails rather than updating .terraform.lock.hcl, so CI only ever uses the
+      # provider versions and checksums committed to the repo.
       - name: Terraform Init
-        run: terraform init -input=false -reconfigure -backend-config=environments/${{ inputs.environment }}.backend.hcl
+        run: terraform init -input=false -lockfile=readonly -reconfigure -backend-config=environments/${{ inputs.environment }}.backend.hcl
 
       - name: Terraform Validate
         run: terraform validate

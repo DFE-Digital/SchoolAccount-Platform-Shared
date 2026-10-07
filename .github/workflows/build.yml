@@ -46,7 +46,7 @@ jobs:
         run: |
           for directory in core-network shared-resources; do
             echo "::group::$directory"
-            terraform -chdir="$directory" init -input=false -backend=false
+            terraform -chdir="$directory" init -input=false -lockfile=readonly -backend=false
             terraform -chdir="$directory" validate
             echo "::endgroup::"
           done
