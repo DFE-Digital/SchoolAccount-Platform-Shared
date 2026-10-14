@@ -122,13 +122,3 @@ resource "azapi_resource" "otlp_dcr" {
 
   tags = var.tags
 }
-
-resource "azurerm_role_assignment" "otlp_publisher" {
-  for_each = var.otlp_publisher_principal_ids
-
-  scope                = azapi_resource.otlp_dcr.id
-  role_definition_name = "Monitoring Metrics Publisher"
-  principal_id         = each.value
-
-  skip_service_principal_aad_check = true
-}

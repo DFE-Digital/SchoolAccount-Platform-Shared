@@ -33,12 +33,6 @@ variable "otlp_data_collection_rule_name" {
   description = "Data Collection Rule name for OTLP ingestion"
 }
 
-variable "otlp_publisher_principal_ids" {
-  type        = map(string)
-  description = "Principal IDs allowed to send OTLP telemetry, keyed by a stable label (e.g. app name)"
-  default     = {}
-}
-
 variable "tags" {
   type        = map(string)
   description = "Tags applied to every resource"
