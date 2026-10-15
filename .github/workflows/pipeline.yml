@@ -1,0 +1,101 @@
+name: Platform Shared Pipeline
+
+# Validates one component, and on a push to main plans it in every environment
+# and applies the environments in turn. Called by each component's workflow,
+# which sets the triggers, path filters and concurrency group.
+
+on:
+  workflow_call:
+    inputs:
+      component:
+        description: Component to build and deploy
+        type: string
+        required: true
+      format-paths:
+        description: Directories to check the formatting of, space separated
+        type: string
+        required: true
+
+env:
+  # Keep in step with plan.yml and apply.yml.
+  TF_VERSION: 1.16.5
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    env:
+      COMPONENT: ${{ inputs.component }}
+      FORMAT_PATHS: ${{ inputs.format-paths }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Check formatting
+        run: |
+          for directory in $FORMAT_PATHS; do
+            terraform fmt -check -recursive -diff "$directory"
+          done
+
+      # No backend: this needs no Azure credentials, so it also runs for pull
+      # requests that cannot read environment secrets.
+      - name: Terraform Init and Validate
+        run: |
+          terraform -chdir="$COMPONENT" init -input=false -lockfile=readonly -backend=false
+          terraform -chdir="$COMPONENT" validate
+
+  # Plans every environment before any is applied, so the run summary shows all
+  # the plans up front. The environments are independent, each with its own
+  # subscription and state, so the plans run in parallel. Each waits on its
+  # environment's reviewers, and GitHub lets one review approve all of them at
+  # once. If any plan fails, nothing is applied.
+  plan:
+    name: Plan
+    needs: validate
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, preprod, prod]
+    uses: ./.github/workflows/plan.yml
+    with:
+      component: ${{ inputs.component }}
+      environment: ${{ matrix.environment }}
+    secrets: inherit
+
+  apply-dev:
+    name: Apply To Dev
+    needs: plan
+    uses: ./.github/workflows/apply.yml
+    with:
+      component: ${{ inputs.component }}
+      environment: dev
+    secrets: inherit
+
+  apply-preprod:
+    name: Apply To Pre-Prod
+    needs: [plan, apply-dev]
+    uses: ./.github/workflows/apply.yml
+    with:
+      component: ${{ inputs.component }}
+      environment: preprod
+    secrets: inherit
+
+  apply-prod:
+    name: Apply To Prod
+    needs: [plan, apply-preprod]
+    uses: ./.github/workflows/apply.yml
+    with:
+      component: ${{ inputs.component }}
+      environment: prod
+    secrets: inherit

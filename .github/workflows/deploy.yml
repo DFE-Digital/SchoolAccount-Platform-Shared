@@ -1,8 +1,8 @@
 name: Platform Shared Deploy
 
-# Plans and applies one component in one environment by hand. The pipeline in
-# build.yml plans everything and applies the environments in turn; use this to
-# re-run a single component and environment.
+# Plans and applies one component in one environment by hand. Each component's
+# pipeline plans every environment and applies them in turn; use this to re-run
+# a single component and environment.
 
 on:
   workflow_dispatch:
@@ -19,9 +19,9 @@ on:
         type: environment
         required: true
 
-# Shares a group with the pipeline in build.yml so the two never run together.
+# Shares a group with the component's pipeline so the two never run together.
 concurrency:
-  group: deploy-platform-shared
+  group: deploy-${{ inputs.component }}
   cancel-in-progress: false
 
 jobs:
@@ -38,6 +38,6 @@ jobs:
     needs: plan
     uses: ./.github/workflows/apply.yml
     with:
-      components: ${{ inputs.component }}
+      component: ${{ inputs.component }}
       environment: ${{ inputs.environment }}
     secrets: inherit

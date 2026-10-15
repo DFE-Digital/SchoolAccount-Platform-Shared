@@ -3,8 +3,7 @@ name: Platform Shared Apply
 on:
   workflow_call:
     inputs:
-      components:
-        description: Components to apply, space separated, in the order to apply them
+      component:
         type: string
         required: true
       environment:
@@ -12,16 +11,12 @@ on:
         required: true
 
 env:
-  # Keep in step with plan.yml and build.yml.
+  # Keep in step with plan.yml and pipeline.yml.
   TF_VERSION: 1.16.5
 
 jobs:
-  # One job per environment, so each environment needs one approval, and the
-  # components are applied in the order given rather than in parallel. Later
-  # components may depend on earlier ones, such as shared resources placed in
-  # the core network's subnets.
   apply:
-    name: Apply (${{ inputs.environment }})
+    name: Apply (${{ inputs.component }}, ${{ inputs.environment }})
     runs-on: ubuntu-latest
 
     environment: ${{ inputs.environment }}
@@ -31,7 +26,7 @@ jobs:
       ARM_CLIENT_SECRET: ${{ fromJson(secrets.AZURE_CREDENTIALS).clientSecret }}
       ARM_SUBSCRIPTION_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).subscriptionId }}
       ARM_TENANT_ID: ${{ fromJson(secrets.AZURE_CREDENTIALS).tenantId }}
-      COMPONENTS: ${{ inputs.components }}
+      COMPONENT: ${{ inputs.component }}
       ENVIRONMENT: ${{ inputs.environment }}
 
     steps:
@@ -49,24 +44,16 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
           terraform_wrapper: false
 
-      # Each plan is downloaded to plans/tfplan-<component>-<environment>/tfplan.
-      - name: Download Plans
+      - name: Download Plan
         uses: actions/download-artifact@v8
         with:
-          pattern: tfplan-*-${{ inputs.environment }}
+          name: tfplan-${{ inputs.component }}-${{ inputs.environment }}
           path: plans
 
       # A saved plan is refused if the environment's state has changed since it
-      # was made, so a stale plan fails here rather than applying. The step
-      # stops at the first failure, so a later component is never applied after
-      # an earlier one fails.
+      # was made, so a stale plan fails here rather than applying.
       - name: Terraform Apply
         run: |
-          for component in $COMPONENTS; do
-            echo "::group::$component"
-            terraform -chdir="$component" init -input=false -lockfile=readonly -reconfigure \
-              -backend-config="environments/$ENVIRONMENT.backend.hcl"
-            terraform -chdir="$component" apply -input=false -parallelism=1 \
-              "$GITHUB_WORKSPACE/plans/tfplan-$component-$ENVIRONMENT/tfplan"
-            echo "::endgroup::"
-          done
+          terraform -chdir="$COMPONENT" init -input=false -lockfile=readonly -reconfigure \
+            -backend-config="environments/$ENVIRONMENT.backend.hcl"
+          terraform -chdir="$COMPONENT" apply -input=false -parallelism=1 "$GITHUB_WORKSPACE/plans/tfplan"
