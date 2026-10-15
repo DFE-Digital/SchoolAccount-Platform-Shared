@@ -6,10 +6,6 @@ log_analytics_workspace_name = "s268p01log-sa-shared"
 
 application_insights_name = "s268p01appi-sa-shared"
 
-azure_monitor_workspace_name       = "s268p01amw-sa-shared"
-otlp_data_collection_endpoint_name = "s268p01dce-sa-otlp"
-otlp_data_collection_rule_name     = "s268p01dcr-sa-otlp"
-
 tags = {
   "Environment"      = "Prod"
   "Parent Business"  = "Funding and Allocations"
