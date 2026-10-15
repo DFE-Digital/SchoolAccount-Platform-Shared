@@ -1,0 +1,39 @@
+name: Shared Resources
+
+# Runs only when the shared resources or the pipeline itself changes.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - shared-resources/**
+      - .github/workflows/shared-resources.yml
+      - .github/workflows/pipeline.yml
+      - .github/workflows/plan.yml
+      - .github/workflows/apply.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - shared-resources/**
+      - .github/workflows/shared-resources.yml
+      - .github/workflows/pipeline.yml
+      - .github/workflows/plan.yml
+      - .github/workflows/apply.yml
+
+# A deploy holds its group from the first plan to the last apply, so a second
+# run cannot change an environment between a plan and its apply. Shares the
+# group with deploy.yml for this component. Pull request runs only validate, so
+# they queue on their own branch and cancel when superseded.
+concurrency:
+  group: ${{ github.event_name == 'push' && 'deploy-shared-resources' || format('validate-shared-resources-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  pipeline:
+    name: Shared Resources
+    uses: ./.github/workflows/pipeline.yml
+    with:
+      component: shared-resources
+      format-paths: shared-resources
+    secrets: inherit
