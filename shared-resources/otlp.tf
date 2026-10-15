@@ -135,22 +135,12 @@ locals {
 }
 
 # Publish the endpoints to the shared App Configuration store so apps read
-# them like any other setting.
-
-data "azurerm_client_config" "current" {}
+# them like any other setting. Writing keys is a data-plane action: the
+# deploying identity needs App Configuration Data Owner on the store.
 
 data "azurerm_app_configuration" "shared" {
   name                = var.app_configuration_name
   resource_group_name = var.resource_group_name
-}
-
-# Writing keys is a data-plane action, which the deploying identity's Owner or
-# Contributor roles don't cover. Scoped to the store only. A first apply can
-# 403 on the keys while the role propagates; re-running fixes it.
-resource "azurerm_role_assignment" "deployer_app_config_owner" {
-  scope                = data.azurerm_app_configuration.shared.id
-  role_definition_name = "App Configuration Data Owner"
-  principal_id         = data.azurerm_client_config.current.object_id
 }
 
 resource "azurerm_app_configuration_key" "otlp" {
@@ -159,6 +149,4 @@ resource "azurerm_app_configuration_key" "otlp" {
   configuration_store_id = data.azurerm_app_configuration.shared.id
   key                    = each.key
   value                  = each.value
-
-  depends_on = [azurerm_role_assignment.deployer_app_config_owner]
 }
