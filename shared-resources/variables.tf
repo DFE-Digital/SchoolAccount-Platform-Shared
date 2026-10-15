@@ -18,6 +18,11 @@ variable "application_insights_name" {
   description = "Shared Application Insights name"
 }
 
+variable "app_configuration_name" {
+  type        = string
+  description = "Shared App Configuration store the OTLP endpoints are published to"
+}
+
 variable "azure_monitor_workspace_name" {
   type        = string
   description = "Azure Monitor workspace name, the destination for OTLP metrics"

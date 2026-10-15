@@ -122,3 +122,43 @@ resource "azapi_resource" "otlp_dcr" {
 
   tags = var.tags
 }
+
+locals {
+  otlp_dcr_path = "datacollectionRules/${azapi_resource.otlp_dcr.output.properties.immutableId}/streams"
+
+  # Published to App Configuration under these keys, unlabelled.
+  otlp_endpoints = {
+    "otlp-traces-endpoint"  = "${azurerm_monitor_data_collection_endpoint.otlp.logs_ingestion_endpoint}/${local.otlp_dcr_path}/Microsoft-OTLP-Traces/otlp/v1/traces"
+    "otlp-logs-endpoint"    = "${azurerm_monitor_data_collection_endpoint.otlp.logs_ingestion_endpoint}/${local.otlp_dcr_path}/Microsoft-OTLP-Logs/otlp/v1/logs"
+    "otlp-metrics-endpoint" = "${azurerm_monitor_data_collection_endpoint.otlp.metrics_ingestion_endpoint}/${local.otlp_dcr_path}/Custom-Metrics-Otel/otlp/v1/metrics"
+  }
+}
+
+# Publish the endpoints to the shared App Configuration store so apps read
+# them like any other setting.
+
+data "azurerm_client_config" "current" {}
+
+data "azurerm_app_configuration" "shared" {
+  name                = var.app_configuration_name
+  resource_group_name = var.resource_group_name
+}
+
+# Writing keys is a data-plane action, which the deploying identity's Owner or
+# Contributor roles don't cover. Scoped to the store only. A first apply can
+# 403 on the keys while the role propagates; re-running fixes it.
+resource "azurerm_role_assignment" "deployer_app_config_owner" {
+  scope                = data.azurerm_app_configuration.shared.id
+  role_definition_name = "App Configuration Data Owner"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
+resource "azurerm_app_configuration_key" "otlp" {
+  for_each = local.otlp_endpoints
+
+  configuration_store_id = data.azurerm_app_configuration.shared.id
+  key                    = each.key
+  value                  = each.value
+
+  depends_on = [azurerm_role_assignment.deployer_app_config_owner]
+}
