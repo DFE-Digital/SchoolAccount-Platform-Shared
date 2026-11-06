@@ -1,7 +1,10 @@
 name: Core Network
 
-# Runs only when the core network, the modules it uses, or the pipeline itself
-# changes.
+# Deploys only when the core network, the modules it uses, or the pipeline
+# itself changes. Validates every pull request, whatever it changes: the
+# ruleset requires "Core Network / Validate", and a check from a workflow that a
+# path filter skips is never reported, which would leave the pull request
+# blocked.
 on:
   push:
     branches:
@@ -16,13 +19,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - core-network/**
-      - modules/**
-      - .github/workflows/core-network.yml
-      - .github/workflows/pipeline.yml
-      - .github/workflows/plan.yml
-      - .github/workflows/apply.yml
 
 # A deploy holds its group from the first plan to the last apply, so a second
 # run cannot change an environment between a plan and its apply. Shares the
