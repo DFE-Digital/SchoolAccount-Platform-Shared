@@ -35,7 +35,9 @@ resource "azurerm_application_insights" "shared_browser" {
   daily_data_cap_in_gb                 = var.shared_browser_application_insights_daily_data_cap_in_gb
   daily_data_cap_notifications_enabled = true
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    "Telemetry" = "Browser"
+  })
 
   lifecycle {
     prevent_destroy = true
