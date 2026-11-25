@@ -6,6 +6,8 @@ log_analytics_workspace_name = "s268t05log-sa-shared"
 
 application_insights_name = "s268t05appi-sa-shared"
 
+shared_browser_application_insights_name = "s268t05appi-sa-shared-browser"
+
 tags = {
   "Environment"      = "Test"
   "Parent Business"  = "Funding and Allocations"
