@@ -10,7 +10,9 @@ resource "azurerm_application_insights" "shared" {
   application_type    = "web"
   workspace_id        = data.azurerm_log_analytics_workspace.shared.id
 
-  tags = var.tags
+  tags = merge(var.tags, {
+    "Telemetry" = "Server"
+  })
 
   lifecycle {
     prevent_destroy = true
