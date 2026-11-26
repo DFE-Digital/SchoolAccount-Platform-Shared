@@ -1,9 +1,16 @@
 name: Shared Resources
 
 # Deploys only when the shared resources or the pipeline itself changes.
-# Validates every pull request, whatever it changes: the ruleset requires
+#
+# Pull requests are not path filtered at the trigger: the ruleset requires
 # "Shared Resources / Validate", and a check from a workflow that a path filter
-# skips is never reported, which would leave the pull request blocked.
+# skips is never reported, which would leave the pull request blocked. Instead
+# every pull request starts this workflow, the changes job works out whether it
+# touches the shared resources, and if not the pipeline's jobs are skipped,
+# which reports them as passing.
+#
+# The paths below are listed twice, under push and under the changes job's
+# filter. Keep the two lists in step.
 on:
   push:
     branches:
@@ -27,10 +34,42 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Pull requests only: a push has already been filtered by the trigger. Reads
+  # the pull request's changed files from the API, so needs no checkout.
+  changes:
+    name: Detect Changes
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: read
+
+    outputs:
+      changed: ${{ steps.filter.outputs.component }}
+
+    steps:
+      - name: Filter Changed Paths
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            component:
+              - shared-resources/**
+              - .github/workflows/shared-resources.yml
+              - .github/workflows/pipeline.yml
+              - .github/workflows/plan.yml
+              - .github/workflows/apply.yml
+
+  # Runs after changes, or without it on a push, where changes is skipped. If
+  # changes fails, this is skipped too and the required check never reports,
+  # so the pull request stays blocked rather than passing unchecked.
   pipeline:
     name: Shared Resources
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.result != 'failure' }}
     uses: ./.github/workflows/pipeline.yml
     with:
       component: shared-resources
       format-paths: shared-resources
+      changed: ${{ github.event_name == 'push' || needs.changes.outputs.changed == 'true' }}
     secrets: inherit
