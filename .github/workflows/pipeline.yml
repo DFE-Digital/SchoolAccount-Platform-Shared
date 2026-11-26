@@ -15,6 +15,14 @@ on:
         description: Directories to check the formatting of, space separated
         type: string
         required: true
+      changed:
+        description: >-
+          Whether the component, or anything it depends on, changed. When false
+          every job is skipped, and a skipped job counts as passing for a
+          required check, so a pull request that does not touch the component
+          is not blocked on it.
+        type: boolean
+        default: true
 
 env:
   # Keep in step with plan.yml and apply.yml.
@@ -23,6 +31,7 @@ env:
 jobs:
   validate:
     name: Validate
+    if: ${{ inputs.changed }}
     runs-on: ubuntu-latest
 
     permissions:
